@@ -1,6 +1,10 @@
 async function loadImagesFromGitHub() {
       try {
-        const response = await fetch('images.json');
+const response = await fetch('images.json', {
+    headers: {
+        'Authorization': 'Bearer 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'
+    }
+});
         if (response.ok) {
           const data = await response.json();
           currentImages = data;
