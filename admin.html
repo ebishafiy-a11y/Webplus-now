@@ -1,1 +1,651 @@
+async function loadImagesFromGitHub() {
+      try {
+        const response = await fetch('images.json');
+        if (response.ok) {
+          const data = await response.json();
+          currentImages = data;
+        }
+      } catch (error) {
+        console.log('فایل عکس‌ها پیدا نشد، از عکس‌های پیش‌فرض استفاده می‌شود');
+      }
+      renderSliders();
+    }
 
+    // گرفتن آدرس عکس
+    function getImageUrl(category, index) {
+      if (currentImages[category] && currentImages[category][index]) {
+        return currentImages[category][index];
+      }
+      if (defaultImages[category] && defaultImages[category][index]) {
+        return defaultImages[category][index];
+      }
+      return '';
+    }
+
+    // رندر اسلایدرها
+    function renderSliders() {
+      const categories = ['specialOffers', 'latest', 'winter', 'jeans', 'sneakers', 'bagsShoes', 'accessories'];
+      
+      categories.forEach(category => {
+        const slider = document.getElementById(category + 'Slider');
+        if (!slider) return;
+        
+        slider.innerHTML = '';
+        
+        const images = defaultImages[category] || [];
+        
+        if (images.length === 0) {
+          for (let i = 0; i < 5; i++) {
+            const item = document.createElement('div');
+            item.className = 'slide-item';
+            item.textContent = `محصول ${i + 1}`;
+            slider.appendChild(item);
+          }
+          return;
+        }
+        
+        images.forEach((defaultImg, index) => {
+          const finalUrl = getImageUrl(category, index);
+          
+          const item = document.createElement('div');
+          item.className = 'slide-item';
+          
+          const img = document.createElement('img');
+          img.src = finalUrl;
+          img.alt = 'محصول';
+          img.onerror = function() {
+            this.style.display = 'none';
+          };
+          
+          item.appendChild(img);
+          slider.appendChild(item);
+        });
+      });
+    }
+
+    // باز کردن صفحه محصولات
+    function openProductsPage(category, title) {
+      const modal = document.getElementById('productsModal');
+      const titleEl = document.getElementById('productsTitle');
+      const gridEl = document.getElementById('productsGrid');
+      
+      titleEl.textContent = title;
+      gridEl.innerHTML = '';
+      
+      const images = defaultImages[category] || [];
+      
+      if (images.length === 0) {
+        gridEl.innerHTML = '<p style="text-align: center; font-size: 20px; padding: 40px;">محصولی برای نمایش وجود ندارد</p>';
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+        return;
+      }
+      
+      images.forEach((defaultImg, index) => {
+        const finalUrl = getImageUrl(category, index);
+        
+        const item = document.createElement('div');
+        item.className = 'slide-item';
+        item.style.cursor = 'pointer';
+        item.onclick = () => openImageViewer(finalUrl);
+        
+        const img = document.createElement('img');
+        img.src = finalUrl;
+        img.alt = `محصول ${index + 1}`;
+        img.onerror = function() {
+          this.src = '';
+          this.alt = 'تصویر بارگذاری نشد';
+          this.style.display = 'none';
+        };
+        
+        item.appendChild(img);
+        gridEl.appendChild(item);
+      });
+      
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    // بستن صفحه محصولات
+    function closeProductsPage() {
+      const modal = document.getElementById('productsModal');
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+
+    // باز کردن نمایشگر عکس
+    function openImageViewer(imgSrc) {
+      const viewer = document.getElementById('imageViewer');
+      const img = document.getElementById('viewerImage');
+      img.src = imgSrc;
+      viewer.style.display = 'flex';
+    }
+
+    // بستن نمایشگر عکس
+    function closeImageViewer(event) {
+      const viewer = document.getElementById('imageViewer');
+      
+      if (event.target === viewer || event.target.classList.contains('image-viewer-close')) {
+        viewer.style.display = 'none';
+      }
+    }
+
+    // رفتن به سبد خرید
+    function goToCart() {
+      showMessage('سبد خرید شما خالی است');
+    }
+
+    // نمایش بارگذاری
+    function showLoading() {
+      document.getElementById('loadingIndicator').style.display = 'block';
+    }
+
+    // پنهان کردن بارگذاری
+    function hideLoading() {
+      document.getElementById('loadingIndicator').style.display = 'none';
+    }
+
+    // نمایش پیام
+    function showMessage(text) {
+      const message = document.createElement('div');
+      message.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px 50px; border-radius: 10px; box-shadow: 0 10px 50px rgba(0,0,0,0.3); z-index: 5001; font-size: 18px;';
+      message.textContent = text;
+      document.body.appendChild(message);
+      setTimeout(() => message.remove(), 2000);
+    }
+
+    // بارگذاری صفحه
+    loadImagesFromGitHub();
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پنل مدیریت فروشگاه</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Vazir', Tahoma, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100%;
+      padding: 20px;
+    }
+
+    .admin-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      padding: 40px;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+    }
+
+    .admin-title {
+      font-size: 32px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    .token-section {
+      background: #f8f9fa;
+      padding: 25px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+    }
+
+    .label {
+      display: block;
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+
+    .btn:hover {
+      background: #218838;
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .category-section {
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 2px solid #e0e0e0;
+    }
+
+    .category-title {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .image-item {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    .image-item-title {
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      color: #666;
+    }
+
+    .image-preview {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .message {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 20px 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      z-index: 9999;
+      font-size: 16px;
+      display: none;
+    }
+
+    .message.success {
+      background: #28a745;
+      color: white;
+    }
+
+    .message.error {
+      background: #dc3545;
+      color: white;
+    }
+
+    .info-box {
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+
+    .info-box p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #856404;
+    }
+
+    .loading {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 30px 50px;
+      border-radius: 10px;
+      font-size: 18px;
+      z-index: 10000;
+    }
+
+    .file-input {
+      padding: 10px;
+      cursor: pointer;
+    }
+  </style>
+  <div class="message" id="message"></div>
+  <div class="loading" id="loading">
+   در حال ذخیره...
+  </div>
+  <div class="admin-container">
+   <h1 class="admin-title">🔐 پنل مدیریت فروشگاه</h1>
+   <div class="info-box">
+    <p><strong>⚠️ نکات مهم:</strong></p>
+    <p>۱. توکن گیت‌هاب رو وارد کن (فقط بار اول)</p>
+    <p>۲. اطلاعات مخزن گیت‌هابت رو وارد کن</p>
+    <p>۳. عکس‌هایی که می‌خوای تغییر بدی رو انتخاب کن</p>
+    <p>۴. دکمه "ذخیره تغییرات" رو بزن</p>
+   </div>
+   <div class="token-section"><label class="label">توکن گیت‌هاب (GitHub Token):</label> <input type="password" class="input" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxx"> <label class="label">نام کاربری گیت‌هاب (Username):</label> <input type="text" class="input" id="githubUsername" placeholder="your-username"> <label class="label">نام مخزن (Repository Name):</label> <input type="text" class="input" id="githubRepo" placeholder="your-repo-name"> <button class="btn" onclick="saveToken()">ذخیره اطلاعات</button>
+   </div>
+   <div class="category-section">
+    <h2 class="category-title">تخفیف‌های ویژه</h2>
+    <div id="specialOffersContainer"></div>
+   </div>
+   <div class="category-section">
+    <h2 class="category-title">جدیدترین‌ها</h2>
+    <div id="latestContainer"></div>
+   </div>
+   <div class="category-section">
+    <h2 class="category-title">لباس‌های زمستانی</h2>
+    <div id="winterContainer"></div>
+   </div>
+   <div class="category-section">
+    <h2 class="category-title">شلوار جین</h2>
+    <div id="jeansContainer"></div>
+   </div>
+   <div class="category-section">
+    <h2 class="category-title">کتونی</h2>
+    <div id="sneakersContainer"></div>
+   </div>
+   <div class="category-section"><button class="btn" onclick="uploadToGitHub()" style="background: #dc143c; margin-top: 30px;"> 💾 ذخیره تغییرات روی گیت‌هاب </button>
+   </div>
+  </div>
+  <script>
+    const categories = {
+      specialOffers: 5,
+      latest: 5,
+      winter: 10,
+      jeans: 10,
+      sneakers: 20
+    };
+
+    const selectedImages = {};
+
+    // بارگذاری اطلاعات ذخیره شده
+    function loadSavedInfo() {
+      const token = localStorage.getItem('github_token');
+      const username = localStorage.getItem('github_username');
+      const repo = localStorage.getItem('github_repo');
+
+      if (token) document.getElementById('githubToken').value = token;
+      if (username) document.getElementById('githubUsername').value = username;
+      if (repo) document.getElementById('githubRepo').value = repo;
+    }
+
+    // ذخیره توکن و اطلاعات
+    function saveToken() {
+      const token = document.getElementById('githubToken').value.trim();
+      const username = document.getElementById('githubUsername').value.trim();
+      const repo = document.getElementById('githubRepo').value.trim();
+
+      if (!token || !username || !repo) {
+        showMessage('لطفاً همه فیلدها رو پر کنید!', 'error');
+        return;
+      }
+
+      localStorage.setItem('github_token', token);
+      localStorage.setItem('github_username', username);
+      localStorage.setItem('github_repo', repo);
+
+      showMessage('اطلاعات با موفقیت ذخیره شد! ✓', 'success');
+    }
+
+    // ساخت فیلدهای آپلود عکس
+    function createImageFields() {
+      Object.keys(categories).forEach(category => {
+        const container = document.getElementById(category + 'Container');
+        const count = categories[category];
+
+        for (let i = 0; i < count; i++) {
+          const item = document.createElement('div');
+          item.className = 'image-item';
+
+          const title = document.createElement('div');
+          title.className = 'image-item-title';
+          title.textContent = `عکس ${i + 1}`;
+
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = 'image/*';
+          input.className = 'input file-input';
+          input.onchange = (e) => handleImageSelect(e, category, i);
+
+          const preview = document.createElement('img');
+          preview.className = 'image-preview';
+          preview.id = `preview_${category}_${i}`;
+
+          item.appendChild(title);
+          item.appendChild(input);
+          item.appendChild(preview);
+          container.appendChild(item);
+        }
+      });
+    }
+
+    // فشرده‌سازی عکس
+    function compressImage(file, maxWidth = 800, quality = 0.7) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressedBase64);
+          };
+          img.onerror = reject;
+          img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // انتخاب عکس
+    async function handleImageSelect(event, category, index) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+        const compressed = await compressImage(file, 800, 0.7);
+        
+        if (!selectedImages[category]) {
+          selectedImages[category] = {};
+        }
+        selectedImages[category][index] = compressed;
+
+        const preview = document.getElementById(`preview_${category}_${index}`);
+        preview.src = compressed;
+        preview.style.display = 'block';
+
+        showMessage('عکس آماده شد! ✓', 'success');
+      } catch (error) {
+        showMessage('خطا در پردازش عکس!', 'error');
+      }
+    }
+
+    // آپلود به گیت‌هاب
+    async function uploadToGitHub() {
+      const token = localStorage.getItem('github_token');
+      const username = localStorage.getItem('github_username');
+      const repo = localStorage.getItem('github_repo');
+
+      if (!token || !username || !repo) {
+        showMessage('ابتدا اطلاعات گیت‌هاب رو ذخیره کنید!', 'error');
+        return;
+      }
+
+      if (Object.keys(selectedImages).length === 0) {
+        showMessage('هیچ عکسی انتخاب نکردید!', 'error');
+        return;
+      }
+
+      showLoading();
+
+      try {
+        // گرفتن فایل فعلی
+        let currentData = {};
+        try {
+          const getResponse = await fetch(
+            `https://api.github.com/repos/${username}/${repo}/contents/images.json`,
+            {
+              headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+              }
+            }
+          );
+
+          if (getResponse.ok) {
+            const fileData = await getResponse.json();
+            const content = atob(fileData.content);
+            currentData = JSON.parse(content);
+          }
+        } catch (e) {
+          console.log('فایل جدید ساخته می‌شود');
+        }
+
+        // ادغام عکس‌های جدید
+        Object.keys(selectedImages).forEach(category => {
+          if (!currentData[category]) {
+            currentData[category] = {};
+          }
+          Object.keys(selectedImages[category]).forEach(index => {
+            currentData[category][index] = selectedImages[category][index];
+          });
+        });
+
+        // آماده‌سازی محتوا
+        const content = JSON.stringify(currentData, null, 2);
+        const encodedContent = btoa(unescape(encodeURIComponent(content)));
+
+        // گرفتن SHA فایل فعلی
+        let sha = null;
+        try {
+          const getResponse = await fetch(
+            `https://api.github.com/repos/${username}/${repo}/contents/images.json`,
+            {
+              headers: {
+                'Authorization': `token ${token}`,
+                'Accept': 'application/vnd.github.v3+json'
+              }
+            }
+          );
+
+          if (getResponse.ok) {
+            const fileData = await getResponse.json();
+            sha = fileData.sha;
+          }
+        } catch (e) {
+          console.log('فایل جدید');
+        }
+
+        // آپلود فایل
+        const uploadData = {
+          message: 'بروزرسانی عکس‌ها',
+          content: encodedContent
+        };
+
+        if (sha) {
+          uploadData.sha = sha;
+        }
+
+        const uploadResponse = await fetch(
+          `https://api.github.com/repos/${username}/${repo}/contents/images.json`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `token ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(uploadData)
+          }
+        );
+
+        hideLoading();
+
+        if (uploadResponse.ok) {
+          showMessage('✅ عکس‌ها با موفقیت ذخیره شدند!', 'success');
+          setTimeout(() => {
+            location.reload();
+          }, 2000);
+        } else {
+          const error = await uploadResponse.json();
+          showMessage('❌ خطا: ' + (error.message || 'خطای نامشخص'), 'error');
+        }
+      } catch (error) {
+        hideLoading();
+        showMessage('❌ خطا در اتصال به گیت‌هاب!', 'error');
+      }
+    }
+
+    // نمایش پیام
+    function showMessage(text, type = 'success') {
+      const message = document.getElementById('message');
+      message.textContent = text;
+      message.className = 'message ' + type;
+      message.style.display = 'block';
+      setTimeout(() => {
+        message.style.display = 'none';
+      }, 3000);
+    }
+
+    // نمایش بارگذاری
+    function showLoading() {
+      document.getElementById('loading').style.display = 'block';
+    }
+
+    // پنهان کردن بارگذاری
+    function hideLoading() {
+      document.getElementById('loading').style.display = 'none';
+    }
+
+    // بارگذاری صفحه
+    loadSavedInfo();
+    createImageFields();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a767ccc91129bf7',t:'MTc2NDYzMzAzNC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+    </html>
+            
